@@ -15,8 +15,7 @@ const ReuploadRecordingModal = ({ onClose, report_id}) => {
   const [error,showError]=useState('')
 
   const handleFileChange = (event) => {
-    showAlerts(true)
-    setTimeout(()=>showAlerts(false),2000)
+ 
     setSelectedFile(event.target.files[0]);
   };
 
