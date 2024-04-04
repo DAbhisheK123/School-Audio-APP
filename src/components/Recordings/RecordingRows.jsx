@@ -3,9 +3,10 @@ import UploadRecordingModal from '../uploadComponents/UploadRecordingModal.jsx';
 import { changeLoader } from '../../features/students/utilitySlices.js';
 import CustomizedDialogs from '../Reportss/dailog.jsx';
 import { useDispatch } from 'react-redux';
-import { fetchRecords } from '../../features/students/recordsSlices.js';
+import { fetchRecords, setLoading } from '../../features/students/recordsSlices.js';
+import axios from 'axios';
 import Alert from '@mui/material/Alert';
-
+import ReuploadRecordingModal from '../uploadComponents/ReuploadAudio.jsx';
 const RecordingRows = (props) => {
   const dispatch=useDispatch()
   const { record,name, rollNo} = props;
@@ -14,47 +15,49 @@ const RecordingRows = (props) => {
   const storyRead=record?.storyRead || "Dam"
   const response=record?.response || null
   const [showModal, setShowModal] = useState(false);
+  const [showReModal, setReShowModal] = useState(false);
   const [showReport,setShowReport]=useState(false)
+
   const student={name,rollNo}
   const buttonRef=useRef(null)
   const data = record ? { ...record, student } : {};
   const [alerts,showAlerts]=useState(false);
 
   const [error,showError]=useState('')
-  const genrateReport=async(id)=>{
-    dispatch(changeLoader())
-    try {
-     
-      
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/student/makerequest/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          report_id:id
-        })
-        
+
+  const genrateReport = (id) => {
+    dispatch(changeLoader());
+  
+    return new Promise((resolve, reject) => {
+      axios.post(`${import.meta.env.VITE_API_URL}/api/v1/student/makerequest/`, {
+        report_id: id
+      })
+      .then(response => {
+  
+        if (response.data && response.data.success === true) {
+          showAlerts(true);
+          setTimeout(() => showAlerts(false), 2000);
+          dispatch(fetchRecords());
+          resolve(response.data);
+        } else {
+          showError(response.data.error);
+          reject(response.data.error);
+        }
+      })
+      .catch(error => {
+        console.error(error);
+        showError("An error occurred while generating: " + error.message);
+        reject(error);
+      })
+      .finally(() => {
+        setTimeout(() => showError(""), 3000);
+        dispatch(changeLoader());
       });
-      if (response?.ok==true){
-      showAlerts(true)
-      setTimeout(()=>{showAlerts(false)},2000)
-      dispatch(fetchRecords())
-      dispatch(changeLoader())
-      }
-      if(response?.status && response?.status==false){
-        showError(response.error)
-        setTimeout(()=>{showError("")},2000)
-      }
-        
-      
-    } catch (error) {
-      console.log(error)
-      
-    }
-
-
-  }
+    });
+  };
+  
+  
+  
   return (
     <>
     <div className='flex md:space-x-5 overflow-hidden'>
@@ -67,8 +70,8 @@ const RecordingRows = (props) => {
         Upload New Audio 
       </div>):
       (audioFile)?
-            (<div className='w-20 h-20 md:w-56 md:h-20 bg-purple-300 text-sm md:text-xl  justify-center content-center  md:p-3 md:m-3 text-center shadow-sm rounded-sm mb-1' >
-            Audio Uploaded 
+            (<div className='w-20 h-20 md:w-56 md:h-20 bg-purple-300 text-sm md:text-xl  justify-center content-center cursor-pointer hover:bg-purple-500  md:p-3 md:m-3 text-center shadow-sm rounded-sm mb-1' onClick={()=>setReShowModal(true)} >
+            Audio Uploaded <br/> "Upload Again"
           </div>):
       (
       <div className='w-20 h-20 md:w-56 md:h-20 bg-purple-300 text-sm md:text-xl cursor-pointer justify-center content-center md:p-3 md:m-3 shadow-sm text-center rounded-sm mb-1' onClick={() => {setShowModal(true)}}>
@@ -90,6 +93,7 @@ const RecordingRows = (props) => {
       )}
    
       {showModal && <UploadRecordingModal onClose={() => setShowModal(false)} rollNo={rollNo} />}
+      {showReModal && <ReuploadRecordingModal onClose={() => setReShowModal(false)} report_id={record._id} />}
       {showReport && <CustomizedDialogs onClose={() => setShowReport(false)} props={data}/>}
       <div className="fixed bottom-5 right-5 z-50">
         {alerts && <Alert severity="success">Report generated successfully</Alert>}
