@@ -12,7 +12,7 @@ Currently, two official plugins are available:
 To get started with this project, follow these steps:
 
 1. Clone this repository: `git clone https://github.com/DAbhisheK123/School-Audio-APP.git`
-2. Navigate to the project directory: `cd app`
+2. Navigate to the project directory: `cd main directory`
 3. Install dependencies: `npm install` or `yarn install`
 4. Start the development server: `npm run dev` or `yarn dev`
 
